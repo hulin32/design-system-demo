@@ -1,4 +1,4 @@
-import type { Preview } from '@storybook/react';
+import type { Preview } from '@storybook/react-vite';
 import '../styles/globals.css';
 
 const preview: Preview = {
@@ -10,12 +10,17 @@ const preview: Preview = {
       }
     },
     backgrounds: {
-      default: 'light',
-      values: [
-        { name: 'light', value: '#fafafa' },
-        { name: 'dark', value: '#18181b' },
-        { name: 'white', value: '#ffffff' }
-      ]
+      options: {
+        light: { name: 'light', value: '#fafafa' },
+        dark: { name: 'dark', value: '#18181b' },
+        white: { name: 'white', value: '#ffffff' }
+      }
+    }
+  },
+
+  initialGlobals: {
+    backgrounds: {
+      value: 'light'
     }
   }
 };
