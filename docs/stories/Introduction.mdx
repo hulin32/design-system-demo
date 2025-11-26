@@ -1,0 +1,75 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Introduction" />
+
+# Design System
+
+Welcome to the cross-platform design system documentation.
+
+## Overview
+
+This design system provides a consistent set of UI components and design tokens that work across:
+
+- **Web (React)** - React wrapper components
+- **Web (Vue)** - Vue-compatible web components
+- **Mobile (Flutter)** - Native Flutter widgets
+
+## Architecture
+
+```
+┌─────────────────────────────────────────┐
+│           DESIGN TOKENS (JSON)          │
+│   colors, spacing, typography, etc.     │
+└─────────────────┬───────────────────────┘
+                  │
+    ┌─────────────┼─────────────┐
+    ▼             ▼             ▼
+┌────────┐  ┌──────────┐  ┌──────────┐
+│  CSS   │  │   Dart   │  │   TS/JS  │
+└────────┘  └──────────┘  └──────────┘
+    │             │             │
+    ▼             ▼             ▼
+┌────────┐  ┌──────────┐  ┌──────────┐
+│  Web   │  │  Flutter │  │  React/  │
+│ Comps  │  │  Widgets │  │   Vue    │
+└────────┘  └──────────┘  └──────────┘
+```
+
+## Getting Started
+
+### Installation
+
+**React:**
+```bash
+pnpm add @ds/react
+```
+
+**Vue:**
+```bash
+pnpm add @ds/vue
+```
+
+**Flutter:**
+```yaml
+dependencies:
+  ds_flutter:
+    path: ../packages/flutter
+```
+
+### Usage
+
+See the component documentation in the sidebar for detailed usage examples.
+
+## Design Tokens
+
+The design system uses a token-based approach where all visual properties are defined as design tokens:
+
+- **Colors** - Primary, secondary, neutral, semantic colors
+- **Spacing** - Consistent spacing scale (4px increments)
+- **Typography** - Font families, sizes, weights
+- **Border Radius** - Rounded corner values
+- **Shadows** - Elevation system
+- **Transitions** - Animation durations
+
+Tokens are the single source of truth and are automatically generated for all platforms.
+

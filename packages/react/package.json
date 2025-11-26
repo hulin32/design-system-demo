@@ -1,0 +1,41 @@
+{
+  "name": "@ds/react",
+  "version": "1.0.0",
+  "description": "React wrappers for the design system web components",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lit/react": "^1.0.4",
+    "@ds/web-components": "workspace:*",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0"
+  },
+  "keywords": [
+    "react",
+    "design-system",
+    "components"
+  ]
+}
+

@@ -1,0 +1,80 @@
+name: Tokens Sync
+
+# This workflow can be triggered by:
+# 1. Tokens Studio pushing to the repository
+# 2. Manual dispatch
+# 3. Push to tokens source files
+
+on:
+  push:
+    paths:
+      - 'packages/tokens/src/**'
+  workflow_dispatch:
+    inputs:
+      rebuild_all:
+        description: 'Rebuild all platform outputs'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build design tokens
+        run: pnpm build:tokens
+
+      - name: Copy Dart tokens to Flutter package
+        run: |
+          cp packages/tokens/build/dart/tokens.dart packages/flutter/lib/tokens/tokens.dart
+          echo "✅ Copied Dart tokens to Flutter package"
+
+      - name: Verify token outputs
+        run: |
+          echo "📁 Generated token files:"
+          ls -la packages/tokens/build/css/
+          ls -la packages/tokens/build/scss/
+          ls -la packages/tokens/build/ts/
+          ls -la packages/tokens/build/dart/
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update design tokens'
+          title: 'Update Design Tokens'
+          body: |
+            This PR updates the design tokens from the latest source.
+
+            ## Changes
+            - CSS variables updated
+            - SCSS variables updated
+            - TypeScript constants updated
+            - Dart constants updated (Flutter package)
+
+            ## Generated Files
+            - `packages/tokens/build/css/variables.css`
+            - `packages/tokens/build/scss/_variables.scss`
+            - `packages/tokens/build/ts/index.ts`
+            - `packages/tokens/build/dart/tokens.dart`
+            - `packages/flutter/lib/tokens/tokens.dart`
+          branch: chore/update-tokens
+          delete-branch: true
+

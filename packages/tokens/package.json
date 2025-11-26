@@ -1,0 +1,34 @@
+{
+  "name": "@ds/tokens",
+  "version": "1.0.0",
+  "description": "Design tokens for the cross-platform design system",
+  "type": "module",
+  "main": "build/ts/index.js",
+  "module": "build/ts/index.js",
+  "types": "build/ts/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/ts/index.js",
+      "types": "./build/ts/index.d.ts"
+    },
+    "./css": "./build/css/variables.css",
+    "./scss": "./build/scss/_variables.scss"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsx build.ts",
+    "clean": "rm -rf build/*"
+  },
+  "devDependencies": {
+    "style-dictionary": "^4.0.1",
+    "tsx": "^4.7.0",
+    "@types/node": "^20.11.0"
+  },
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "style-dictionary"
+  ]
+}
