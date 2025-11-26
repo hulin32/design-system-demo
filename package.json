@@ -4,11 +4,11 @@
   "private": true,
   "description": "Cross-platform design system for Flutter, React, and Vue",
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm build:tokens && pnpm build:packages",
     "build:tokens": "pnpm --filter @ds/tokens build",
-    "build:web": "pnpm --filter @ds/web-components build",
-    "build:react": "pnpm --filter @ds/react build",
-    "build:vue": "pnpm --filter @ds/vue build",
+    "build:packages": "pnpm --filter '@ds/*' --filter '!@ds/tokens' build",
+    "build:react": "pnpm build:tokens && pnpm --filter @ds/react build",
+    "build:vue": "pnpm build:tokens && pnpm --filter @ds/vue build",
     "dev": "pnpm -r --parallel dev",
     "lint": "pnpm -r lint",
     "storybook": "pnpm --filter docs storybook",
@@ -22,4 +22,3 @@
     "node": ">=18.0.0"
   }
 }
-

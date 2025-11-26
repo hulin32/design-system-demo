@@ -1,6 +1,5 @@
-import type { Preview } from '@storybook/web-components';
-import '@ds/tokens/css';
-import '@ds/web-components';
+import type { Preview } from '@storybook/react';
+import '../styles/globals.css';
 
 const preview: Preview = {
   parameters: {
@@ -22,4 +21,3 @@ const preview: Preview = {
 };
 
 export default preview;
-

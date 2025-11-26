@@ -1,20 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/web-components';
-import { html } from 'lit';
-import '@ds/web-components';
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button } from '@ds/react';
 
-const meta: Meta = {
+const meta: Meta<typeof Button> = {
   title: 'Components/Button',
+  component: Button,
   tags: ['autodocs'],
-  render: (args) => html`
-    <ds-button
-      variant=${args.variant}
-      size=${args.size}
-      ?disabled=${args.disabled}
-      ?loading=${args.loading}
-    >
-      ${args.label}
-    </ds-button>
-  `,
   argTypes: {
     variant: {
       control: { type: 'select' },
@@ -34,7 +25,11 @@ const meta: Meta = {
       control: 'boolean',
       description: 'Whether the button is in a loading state'
     },
-    label: {
+    fullWidth: {
+      control: 'boolean',
+      description: 'Whether the button should take full width'
+    },
+    children: {
       control: 'text',
       description: 'The button text'
     }
@@ -44,95 +39,96 @@ const meta: Meta = {
     size: 'md',
     disabled: false,
     loading: false,
-    label: 'Button'
+    fullWidth: false,
+    children: 'Button'
   }
 };
 
 export default meta;
-type Story = StoryObj;
+type Story = StoryObj<typeof Button>;
 
 export const Primary: Story = {
   args: {
     variant: 'primary',
-    label: 'Primary Button'
+    children: 'Primary Button'
   }
 };
 
 export const Secondary: Story = {
   args: {
     variant: 'secondary',
-    label: 'Secondary Button'
+    children: 'Secondary Button'
   }
 };
 
 export const Outline: Story = {
   args: {
     variant: 'outline',
-    label: 'Outline Button'
+    children: 'Outline Button'
   }
 };
 
 export const Ghost: Story = {
   args: {
     variant: 'ghost',
-    label: 'Ghost Button'
+    children: 'Ghost Button'
   }
 };
 
 export const Destructive: Story = {
   args: {
     variant: 'destructive',
-    label: 'Delete'
+    children: 'Delete'
   }
 };
 
 export const Small: Story = {
   args: {
     size: 'sm',
-    label: 'Small Button'
+    children: 'Small Button'
   }
 };
 
 export const Large: Story = {
   args: {
     size: 'lg',
-    label: 'Large Button'
+    children: 'Large Button'
   }
 };
 
 export const Loading: Story = {
   args: {
     loading: true,
-    label: 'Loading...'
+    children: 'Loading...'
   }
 };
 
 export const Disabled: Story = {
   args: {
     disabled: true,
-    label: 'Disabled'
+    children: 'Disabled'
   }
 };
 
 export const AllVariants: Story = {
-  render: () => html`
-    <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
-      <ds-button variant="primary">Primary</ds-button>
-      <ds-button variant="secondary">Secondary</ds-button>
-      <ds-button variant="outline">Outline</ds-button>
-      <ds-button variant="ghost">Ghost</ds-button>
-      <ds-button variant="destructive">Destructive</ds-button>
+  render: () => (
+    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+      <Button variant="primary">Primary</Button>
+      <Button variant="secondary">Secondary</Button>
+      <Button variant="outline">Outline</Button>
+      <Button variant="ghost">Ghost</Button>
+      <Button variant="destructive">Destructive</Button>
     </div>
-  `
+  )
 };
 
 export const AllSizes: Story = {
-  render: () => html`
-    <div style="display: flex; gap: 16px; align-items: center;">
-      <ds-button size="sm">Small</ds-button>
-      <ds-button size="md">Medium</ds-button>
-      <ds-button size="lg">Large</ds-button>
+  render: () => (
+    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+      <Button size="sm">Small</Button>
+      <Button size="md">Medium</Button>
+      <Button size="lg">Large</Button>
     </div>
-  `
+  )
 };
 

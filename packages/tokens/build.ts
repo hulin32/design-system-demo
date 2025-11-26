@@ -1,17 +1,53 @@
 import StyleDictionary from 'style-dictionary';
 import type { TransformedToken, Config } from 'style-dictionary/types';
-import { registerTransforms } from './transforms/flutter.js';
+import { copyFileSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
-// Register custom Flutter transforms
-registerTransforms(StyleDictionary);
+// ES Module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Helper to convert hex to Flutter Color format
 function hexToFlutterColor(hex: string): string {
-  const cleanHex = hex.replace('#', '');
+  // Handle already processed values or references
+  if (!hex || typeof hex !== 'string') return '0x00000000';
+  
+  // Clean the hex value
+  const cleanHex = hex.replace('#', '').toUpperCase();
+  
   if (cleanHex.length === 6) {
-    return `0xFF${cleanHex.toUpperCase()}`;
+    return `0xFF${cleanHex}`;
   }
-  return `0x${cleanHex.toUpperCase()}`;
+  if (cleanHex.length === 8) {
+    return `0x${cleanHex}`;
+  }
+  return '0x00000000';
+}
+
+// Helper to convert name to valid Dart identifier
+// Only adds prefix for standalone identifiers, not when part of a larger name
+function toDartIdentifier(name: string, addPrefix: boolean = true): string {
+  // If starts with number and we need to add prefix
+  if (/^\d/.test(name) && addPrefix) {
+    return `n${name}`; // Use 'n' for numeric prefix (e.g., n50, n2xl)
+  }
+  return name;
+}
+
+// Helper to convert name to camelCase for Dart
+function toDartName(parts: string[]): string {
+  return parts
+    .map((p, i) => {
+      // Don't add prefix for parts that will be concatenated (not first position)
+      // For first position, keep as-is if it starts with letter
+      if (i === 0) {
+        return /^\d/.test(p) ? `n${p}` : p;
+      }
+      // For non-first parts, capitalize first letter
+      return p.charAt(0).toUpperCase() + p.slice(1);
+    })
+    .join('');
 }
 
 // Custom format for Flutter/Dart
@@ -25,19 +61,25 @@ import 'package:flutter/material.dart';
 
 `;
 
+    // Get original (non-transformed) tokens
+    const allTokens = dictionary.allTokens;
+    
     // Group tokens by category
-    const colors = dictionary.allTokens.filter(
+    const colors = allTokens.filter(
       (t) => t.type === 'color' || t.path[0] === 'color'
     );
-    const spacing = dictionary.allTokens.filter(
+    const spacing = allTokens.filter(
       (t) => t.type === 'spacing' || t.path[0] === 'spacing'
     );
-    const typography = dictionary.allTokens.filter((t) => t.path[0] === 'typography');
-    const borderRadius = dictionary.allTokens.filter(
+    const typography = allTokens.filter((t) => t.path[0] === 'typography');
+    const borderRadius = allTokens.filter(
       (t) => t.type === 'borderRadius' || t.path[0] === 'borderRadius'
     );
-    const transitions = dictionary.allTokens.filter(
+    const transitions = allTokens.filter(
       (t) => t.type === 'transition' || t.path[0] === 'transition'
+    );
+    const shadows = allTokens.filter(
+      (t) => t.type === 'boxShadow' || t.path[0] === 'shadow'
     );
 
     let output = header;
@@ -47,11 +89,17 @@ import 'package:flutter/material.dart';
 abstract class DsColors {
 `;
     colors.forEach((token) => {
-      const name = token.path
-        .slice(1)
-        .map((p, i) => (i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)))
-        .join('');
-      const colorValue = hexToFlutterColor(token.value as string);
+      const name = toDartName(token.path.slice(1));
+      // Get the original value - if it's a reference, use the resolved value instead
+      let rawValue = token.original?.value ?? token.value;
+      
+      // Check if it's a token reference (e.g., "{color.neutral.50}")
+      if (typeof rawValue === 'string' && rawValue.startsWith('{')) {
+        // Use the resolved value from Style Dictionary
+        rawValue = token.value;
+      }
+      
+      const colorValue = hexToFlutterColor(rawValue as string);
       output += `  static const Color ${name} = Color(${colorValue});\n`;
     });
     output += `}\n\n`;
@@ -62,7 +110,8 @@ abstract class DsSpacing {
 `;
     spacing.forEach((token) => {
       const name = `space${token.path[1]}`;
-      const value = parseFloat(token.value as string);
+      const originalValue = token.original?.value ?? token.value;
+      const value = parseFloat(String(originalValue).replace('px', ''));
       output += `  static const double ${name} = ${value};\n`;
     });
     output += `}\n\n`;
@@ -78,21 +127,30 @@ abstract class DsTypography {
 
     fontFamilies.forEach((token) => {
       const name = `fontFamily${token.path[2].charAt(0).toUpperCase() + token.path[2].slice(1)}`;
-      const value = (token.value as string).split(',')[0].replace(/'/g, '');
+      const originalValue = token.original?.value ?? token.value;
+      const value = String(originalValue).split(',')[0].replace(/'/g, '').trim();
       output += `  static const String ${name} = '${value}';\n`;
     });
     fontSizes.forEach((token) => {
-      const name = `fontSize${token.path[2].charAt(0).toUpperCase() + token.path[2].slice(1)}`;
-      const value = parseFloat(token.value as string);
+      const rawName = token.path[2];
+      // For names like "2xl", capitalize properly: "fontSize2xl"
+      const capitalizedName = /^\d/.test(rawName) 
+        ? rawName.toUpperCase().replace('XL', 'xl') // Keep "2xl" format
+        : rawName.charAt(0).toUpperCase() + rawName.slice(1);
+      const name = `fontSize${capitalizedName}`;
+      const originalValue = token.original?.value ?? token.value;
+      const value = parseFloat(String(originalValue).replace('px', ''));
       output += `  static const double ${name} = ${value};\n`;
     });
     fontWeights.forEach((token) => {
       const name = `fontWeight${token.path[2].charAt(0).toUpperCase() + token.path[2].slice(1)}`;
-      output += `  static const FontWeight ${name} = FontWeight.w${token.value};\n`;
+      const originalValue = token.original?.value ?? token.value;
+      output += `  static const FontWeight ${name} = FontWeight.w${originalValue};\n`;
     });
     lineHeights.forEach((token) => {
       const name = `lineHeight${token.path[2].charAt(0).toUpperCase() + token.path[2].slice(1)}`;
-      output += `  static const double ${name} = ${token.value};\n`;
+      const originalValue = token.original?.value ?? token.value;
+      output += `  static const double ${name} = ${originalValue};\n`;
     });
     output += `}\n\n`;
 
@@ -101,10 +159,23 @@ abstract class DsTypography {
 abstract class DsBorderRadius {
 `;
     borderRadius.forEach((token) => {
-      const name = token.path[1];
-      const value = parseFloat(token.value as string);
+      const rawName = token.path[1];
+      const name = toDartIdentifier(rawName);
+      const originalValue = token.original?.value ?? token.value;
+      const value = parseFloat(String(originalValue).replace('px', ''));
       output += `  static const double ${name} = ${value};\n`;
       output += `  static BorderRadius ${name}All = BorderRadius.circular(${value});\n`;
+    });
+    output += `}\n\n`;
+
+    // Shadows class
+    output += `/// Design system shadow tokens
+abstract class DsShadows {
+`;
+    shadows.forEach((token) => {
+      const name = token.path[1];
+      // Shadows are complex - just provide a placeholder comment
+      output += `  // ${name}: Use BoxShadow or BoxDecoration for shadow implementation\n`;
     });
     output += `}\n\n`;
 
@@ -114,7 +185,8 @@ abstract class DsTransitions {
 `;
     transitions.forEach((token) => {
       const name = token.path[1];
-      const ms = parseInt(token.value as string);
+      const originalValue = token.original?.value ?? token.value;
+      const ms = parseInt(String(originalValue).replace(/[^\d]/g, ''));
       output += `  static const Duration ${name} = Duration(milliseconds: ${ms});\n`;
     });
     output += `}\n`;
@@ -122,6 +194,19 @@ abstract class DsTransitions {
     return output;
   }
 });
+
+// Helper to format a key - quote if needed (starts with number or contains special chars)
+function formatKey(key: string): string {
+  if (/^\d/.test(key) || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
+    return `'${key}'`;
+  }
+  return key;
+}
+
+// Helper to escape string value for use in single-quoted string
+function escapeValue(value: string): string {
+  return value.replace(/'/g, "\\'");
+}
 
 // Custom format for TypeScript with proper types
 StyleDictionary.registerFormat({
@@ -143,9 +228,9 @@ StyleDictionary.registerFormat({
       colorGroups[group][key] = token.value as string;
     });
     Object.entries(colorGroups).forEach(([group, values]) => {
-      output += `  ${group}: {\n`;
+      output += `  ${formatKey(group)}: {\n`;
       Object.entries(values).forEach(([key, value]) => {
-        output += `    '${key}': '${value}',\n`;
+        output += `    ${formatKey(key)}: '${escapeValue(value)}',\n`;
       });
       output += `  },\n`;
     });
@@ -156,7 +241,7 @@ StyleDictionary.registerFormat({
     dictionary.allTokens
       .filter((t) => t.path[0] === 'spacing')
       .forEach((token) => {
-        output += `  '${token.path[1]}': '${token.value}',\n`;
+        output += `  ${formatKey(token.path[1])}: '${escapeValue(token.value as string)}',\n`;
       });
     output += `} as const;\n\n`;
 
@@ -170,9 +255,9 @@ StyleDictionary.registerFormat({
       typoGroups[group][token.path[2]] = token.value as string;
     });
     Object.entries(typoGroups).forEach(([group, values]) => {
-      output += `  ${group}: {\n`;
+      output += `  ${formatKey(group)}: {\n`;
       Object.entries(values).forEach(([key, value]) => {
-        output += `    ${key}: '${value}',\n`;
+        output += `    ${formatKey(key)}: '${escapeValue(value)}',\n`;
       });
       output += `  },\n`;
     });
@@ -183,7 +268,7 @@ StyleDictionary.registerFormat({
     dictionary.allTokens
       .filter((t) => t.path[0] === 'borderRadius')
       .forEach((token) => {
-        output += `  ${token.path[1]}: '${token.value}',\n`;
+        output += `  ${formatKey(token.path[1])}: '${escapeValue(token.value as string)}',\n`;
       });
     output += `} as const;\n\n`;
 
@@ -192,7 +277,7 @@ StyleDictionary.registerFormat({
     dictionary.allTokens
       .filter((t) => t.path[0] === 'shadow')
       .forEach((token) => {
-        output += `  ${token.path[1]}: '${token.value}',\n`;
+        output += `  ${formatKey(token.path[1])}: '${escapeValue(token.value as string)}',\n`;
       });
     output += `} as const;\n\n`;
 
@@ -201,7 +286,7 @@ StyleDictionary.registerFormat({
     dictionary.allTokens
       .filter((t) => t.path[0] === 'transition')
       .forEach((token) => {
-        output += `  ${token.path[1]}: '${token.value}',\n`;
+        output += `  ${formatKey(token.path[1])}: '${escapeValue(token.value as string)}',\n`;
       });
     output += `} as const;\n\n`;
 
@@ -210,7 +295,7 @@ StyleDictionary.registerFormat({
     dictionary.allTokens
       .filter((t) => t.path[0] === 'zIndex')
       .forEach((token) => {
-        output += `  ${token.path[1]}: ${token.value},\n`;
+        output += `  ${formatKey(token.path[1])}: ${token.value},\n`;
       });
     output += `} as const;\n\n`;
 
@@ -227,6 +312,46 @@ StyleDictionary.registerFormat({
 
 export type Tokens = typeof tokens;
 export default tokens;
+
+// ============================================
+// Type utilities for autocomplete & type safety
+// ============================================
+
+/** Available color categories */
+export type ColorCategory = keyof typeof colors;
+
+/** Color shades for a specific category (e.g., "50" | "100" | "200"...) */
+export type ColorShade<C extends ColorCategory> = keyof typeof colors[C];
+
+/** Get the actual color value type */
+export type ColorValue<C extends ColorCategory, S extends ColorShade<C>> = typeof colors[C][S];
+
+/** Available spacing scale keys */
+export type SpacingScale = keyof typeof spacing;
+
+/** Available border radius keys */
+export type BorderRadiusScale = keyof typeof borderRadius;
+
+/** Available shadow keys */
+export type ShadowScale = keyof typeof shadows;
+
+/** Available font size keys */
+export type FontSizeScale = keyof typeof typography.fontSize;
+
+/** Available font weight keys */
+export type FontWeightScale = keyof typeof typography.fontWeight;
+
+/** Available font family keys */
+export type FontFamilyScale = keyof typeof typography.fontFamily;
+
+/** Available line height keys */
+export type LineHeightScale = keyof typeof typography.lineHeight;
+
+/** Available transition keys */
+export type TransitionScale = keyof typeof transitions;
+
+/** Available z-index keys */
+export type ZIndexScale = keyof typeof zIndex;
 `;
 
     return output;
@@ -276,7 +401,8 @@ const config: Config = {
       ]
     },
     dart: {
-      transformGroup: 'flutter',
+      // Use 'js' transform group - we handle Dart-specific transforms in the format
+      transformGroup: 'js',
       buildPath: 'build/dart/',
       files: [
         {
@@ -288,6 +414,21 @@ const config: Config = {
   }
 };
 
+// Copy generated Dart tokens to Flutter package
+function copyDartTokensToFlutter(): void {
+  const sourcePath = resolve(__dirname, 'build/dart/tokens.dart');
+  const destPath = resolve(__dirname, '../flutter/lib/tokens/tokens.dart');
+  
+  try {
+    // Ensure destination directory exists
+    mkdirSync(dirname(destPath), { recursive: true });
+    copyFileSync(sourcePath, destPath);
+    console.log('   - Copied to Flutter: ../flutter/lib/tokens/tokens.dart');
+  } catch (error) {
+    console.warn('   ⚠️  Could not copy to Flutter package:', error instanceof Error ? error.message : error);
+  }
+}
+
 // Run the build
 async function build(): Promise<void> {
   console.log('Building design tokens...');
@@ -295,6 +436,10 @@ async function build(): Promise<void> {
   try {
     const sd = new StyleDictionary(config);
     await sd.buildAllPlatforms();
+    
+    // Auto-copy Dart tokens to Flutter package
+    copyDartTokensToFlutter();
+    
     console.log('\n✅ Tokens built successfully!');
     console.log('   - CSS: build/css/variables.css');
     console.log('   - SCSS: build/scss/_variables.scss');

@@ -3,27 +3,33 @@
   "version": "1.0.0",
   "description": "Design tokens for the cross-platform design system",
   "type": "module",
-  "main": "build/ts/index.js",
-  "module": "build/ts/index.js",
-  "types": "build/ts/index.d.ts",
+  "main": "./build/ts/index.js",
+  "module": "./build/ts/index.js",
+  "types": "./build/ts/index.d.ts",
   "exports": {
     ".": {
+      "types": "./build/ts/index.d.ts",
       "import": "./build/ts/index.js",
-      "types": "./build/ts/index.d.ts"
+      "default": "./build/ts/index.js"
     },
-    "./css": "./build/css/variables.css",
-    "./scss": "./build/scss/_variables.scss"
+    "./css": {
+      "default": "./build/css/variables.css"
+    },
+    "./scss": {
+      "default": "./build/scss/_variables.scss"
+    }
   },
   "files": [
     "build"
   ],
   "scripts": {
-    "build": "tsx build.ts",
+    "build": "tsx build.ts && tsc build/ts/index.ts --declaration --outDir build/ts --module ESNext --moduleResolution bundler --target ES2020",
     "clean": "rm -rf build/*"
   },
   "devDependencies": {
     "style-dictionary": "^4.0.1",
     "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
     "@types/node": "^20.11.0"
   },
   "keywords": [

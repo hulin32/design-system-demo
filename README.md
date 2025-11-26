@@ -1,6 +1,6 @@
 # Cross-Platform Design System
 
-A unified design system that works across Flutter, React, and Vue applications.
+A unified design system that works across Flutter, React, and Vue applications with full SSR support.
 
 ## Architecture
 
@@ -8,26 +8,36 @@ A unified design system that works across Flutter, React, and Vue applications.
 ┌─────────────────────────────────────────────────────────────────┐
 │                      FIGMA (Design Source)                       │
 │                    + Tokens Studio Plugin                        │
-└─────────────────────────┬───────────────────────────────────────┘
-                          │ Export JSON
-                          ▼
+└─────────────────────────────┬───────────────────────────────────┘
+                              │ Export JSON
+                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DESIGN TOKENS (JSON)                          │
 │         colors, spacing, typography, shadows, radii              │
-└─────────────────────────┬───────────────────────────────────────┘
-                          │ Style Dictionary
-          ┌───────────────┼───────────────┐
-          ▼               ▼               ▼
-    ┌──────────┐    ┌──────────┐    ┌──────────┐
-    │   CSS    │    │   Dart   │    │ TS/JS    │
-    │Variables │    │Constants │    │Constants │
-    └────┬─────┘    └────┬─────┘    └────┬─────┘
-         │               │               │
-         ▼               ▼               ▼
-┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-│ Web Comps   │   │   Flutter   │   │  React/Vue  │
-│   (Lit)     │   │   Package   │   │  Wrappers   │
-└─────────────┘   └─────────────┘   └─────────────┘
+└─────────────────────────────┬───────────────────────────────────┘
+                              │ Style Dictionary
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+    ┌──────────┐        ┌──────────┐        ┌──────────┐
+    │   CSS    │        │   Dart   │        │ TS/JS    │
+    │Variables │        │Constants │        │Constants │
+    └────┬─────┘        └────┬─────┘        └────┬─────┘
+         │                   │                   │
+         │                   ▼                   ▼
+         │            ┌─────────────┐     ┌─────────────┐
+         │            │   Flutter   │     │ Tailwind    │
+         │            │   Package   │     │   Preset    │
+         │            └─────────────┘     └──────┬──────┘
+         │                                       │
+         │                          ┌────────────┴────────────┐
+         │                          ▼                         ▼
+         │                   ┌─────────────┐           ┌─────────────┐
+         │                   │    React    │           │     Vue     │
+         │                   │  (Native)   │           │  (Native)   │
+         │                   └─────────────┘           └─────────────┘
+         │
+         └──────────────────────────────────────────────────────────►
+                              Storybook Docs
 ```
 
 ```
@@ -40,21 +50,22 @@ design-system/
 │   │   │   ├── css/            # CSS custom properties
 │   │   │   ├── scss/           # SCSS variables
 │   │   │   ├── dart/           # Flutter constants
-│   │   │   └── ts/             # TypeScript constants
-│   │   └── config.js           # Style Dictionary config
+│   │   │   └── ts/             # TypeScript constants + types
+│   │   └── build.ts            # Style Dictionary config
 │   │
-│   ├── web-components/         # Lit-based web components
+│   ├── react/                  # Native React components
 │   │   ├── src/
-│   │   │   ├── button/
-│   │   │   ├── input/
-│   │   │   └── ...
+│   │   │   ├── components/     # Button, Input, Card
+│   │   │   ├── tailwind.preset.ts
+│   │   │   └── tokens.ts       # Token re-exports
 │   │   └── package.json
 │   │
-│   ├── react/                  # React wrapper components
-│   │   └── src/
-│   │
-│   ├── vue/                    # Vue wrapper components  
-│   │   └── src/
+│   ├── vue/                    # Native Vue components
+│   │   ├── src/
+│   │   │   ├── components/     # Button, Input, Card
+│   │   │   ├── tailwind.preset.ts
+│   │   │   └── tokens.ts       # Token re-exports
+│   │   └── package.json
 │   │
 │   └── flutter/                # Flutter widget library
 │       ├── lib/
@@ -64,19 +75,17 @@ design-system/
 │       └── pubspec.yaml
 │
 ├── docs/                       # Storybook documentation
-├── .github/                    # CI/CD for token sync
 └── package.json                # Monorepo root (pnpm workspaces)
 ```
 
 ## Packages
 
-| Package              | Description                             |
-| -------------------- | --------------------------------------- |
-| `@ds/tokens`         | Design tokens source and build pipeline |
-| `@ds/web-components` | Lit-based web components                |
-| `@ds/react`          | React wrapper components                |
-| `@ds/vue`            | Vue wrapper components                  |
-| `packages/flutter`   | Flutter widget library                  |
+| Package            | Description                                    |
+| ------------------ | ---------------------------------------------- |
+| `@ds/tokens`       | Design tokens source, build, and type utilities |
+| `@ds/react`        | Native React components with Tailwind          |
+| `@ds/vue`          | Native Vue components with Tailwind            |
+| `packages/flutter` | Flutter widget library                         |
 
 ## Getting Started
 
@@ -113,39 +122,104 @@ pnpm storybook
 
 Tokens are the single source of truth for the design system. They are defined in JSON format and transformed to platform-specific outputs:
 
-- **CSS Custom Properties** - For web components
-- **TypeScript Constants** - For type-safe JS usage
+- **CSS Custom Properties** - For Storybook and legacy usage
+- **TypeScript Constants** - For type-safe JS usage with full autocomplete
 - **Dart Constants** - For Flutter
+- **Tailwind Preset** - Auto-generated theme configuration
 
 ### Token Categories
 
-- **Colors** - Primary, secondary, neutral, semantic colors
-- **Spacing** - Consistent spacing scale
-- **Typography** - Font families, sizes, weights
+- **Colors** - Primary, secondary, neutral, success, warning, error, semantic
+- **Spacing** - Consistent spacing scale (0-24)
+- **Typography** - Font families, sizes, weights, line heights
 - **Border Radius** - Rounded corner values
 - **Shadows** - Elevation and shadow definitions
+- **Transitions** - Animation timing
+- **Z-Index** - Layering scale
 
-## Usage
+### Type Utilities
 
-### React
+Tokens include TypeScript type utilities for autocomplete:
 
-```tsx
-import { DsButton } from '@ds/react';
+```typescript
+import { tokens, type ColorCategory, type SpacingScale } from '@ds/react';
 
-function App() {
-  return <DsButton variant="primary" size="md">Click me</DsButton>;
+// Full autocomplete
+const primary500 = tokens.colors.primary['500'];  // "#3b82f6"
+
+// Type-safe function
+function getSpacing(key: SpacingScale): string {
+  return tokens.spacing[key];
 }
 ```
 
-### Vue
+## Usage
+
+### React (Next.js compatible)
+
+```bash
+npm install @ds/react
+```
+
+```typescript
+// tailwind.config.ts
+import { dsPreset } from '@ds/react';
+
+export default {
+  presets: [dsPreset],
+  content: [
+    './app/**/*.{ts,tsx}',
+    './node_modules/@ds/react/**/*.{js,ts,jsx,tsx}',
+  ],
+};
+```
+
+```tsx
+import { Button, Input, Card } from '@ds/react';
+
+function App() {
+  return (
+    <Card variant="elevated" padding="md">
+      <Input label="Email" type="email" placeholder="Enter email" />
+      <Button variant="primary" size="md">Submit</Button>
+    </Card>
+  );
+}
+```
+
+### Vue (Nuxt compatible)
+
+```bash
+npm install @ds/vue
+```
+
+```typescript
+// tailwind.config.ts
+import { dsPreset } from '@ds/vue';
+
+export default {
+  presets: [dsPreset],
+  content: [
+    './components/**/*.vue',
+    './node_modules/@ds/vue/**/*.{js,vue}',
+  ],
+};
+```
 
 ```vue
 <template>
-  <ds-button variant="primary" size="md">Click me</ds-button>
+  <Card variant="elevated" padding="md">
+    <Input v-model="email" label="Email" type="email" />
+    <Button variant="primary" @click="submit">Submit</Button>
+  </Card>
 </template>
 
 <script setup>
-import '@ds/web-components';
+import { Button, Input, Card } from '@ds/vue';
+import { ref } from 'vue';
+
+const email = ref('');
+const submit = () => console.log(email.value);
 </script>
 ```
 
@@ -167,6 +241,36 @@ class MyWidget extends StatelessWidget {
 }
 ```
 
+## Components
+
+### Button
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | `'primary' \| 'secondary' \| 'outline' \| 'ghost' \| 'destructive'` | `'primary'` | Button style |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Button size |
+| `loading` | `boolean` | `false` | Show loading spinner |
+| `disabled` | `boolean` | `false` | Disable interactions |
+| `fullWidth` | `boolean` | `false` | Full width button |
+
+### Input
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `type` | `'text' \| 'email' \| 'password' \| 'number' \| 'tel' \| 'url' \| 'search'` | `'text'` | Input type |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Input size |
+| `label` | `string` | - | Label text |
+| `helper` | `string` | - | Helper text |
+| `error` | `string` | - | Error message |
+
+### Card
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | `'elevated' \| 'outlined' \| 'filled'` | `'elevated'` | Card style |
+| `padding` | `'none' \| 'sm' \| 'md' \| 'lg'` | `'md'` | Card padding |
+| `interactive` | `boolean` | `false` | Enable click interactions |
+
 ## Figma Integration
 
 This design system integrates with Figma via the Tokens Studio plugin:
@@ -178,4 +282,3 @@ This design system integrates with Figma via the Tokens Studio plugin:
 ## License
 
 MIT
-

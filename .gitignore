@@ -39,3 +39,4 @@ packages/flutter/build/
 # Storybook
 docs/storybook-static/
 
+.playwright-mcp/

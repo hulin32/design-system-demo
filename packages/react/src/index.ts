@@ -1,61 +1,38 @@
-import { createComponent, type EventName } from '@lit/react';
-import React from 'react';
+// Components
+export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './components/Button';
+export { Input, type InputProps, type InputSize, type InputType } from './components/Input';
+export { Card, type CardProps, type CardVariant, type CardPadding } from './components/Card';
 
-// Import web components
-import {
-  DsButton as DsButtonElement,
-  DsInput as DsInputElement,
-  DsCard as DsCardElement,
-  type ButtonVariant,
-  type ButtonSize,
-  type InputSize,
-  type InputType,
-  type CardVariant,
-  type CardPadding
-} from '@ds/web-components';
+// Tailwind preset for consumers
+export { dsPreset } from './tailwind.preset';
 
-// Re-export types
-export type { ButtonVariant, ButtonSize, InputSize, InputType, CardVariant, CardPadding };
+// Tokens and type utilities for autocomplete
+export {
+  tokens,
+  colors,
+  spacing,
+  typography,
+  borderRadius,
+  shadows,
+  transitions,
+  zIndex,
+} from './tokens';
 
-/**
- * React wrapper for ds-button web component
- */
-export const DsButton = createComponent({
-  tagName: 'ds-button',
-  elementClass: DsButtonElement,
-  react: React,
-  events: {
-    onClick: 'click' as EventName<MouseEvent>
-  }
-});
+export type {
+  Tokens,
+  ColorCategory,
+  ColorShade,
+  ColorValue,
+  SpacingScale,
+  BorderRadiusScale,
+  ShadowScale,
+  FontSizeScale,
+  FontWeightScale,
+  FontFamilyScale,
+  LineHeightScale,
+  TransitionScale,
+  ZIndexScale,
+} from './tokens';
 
-/**
- * React wrapper for ds-input web component
- */
-export const DsInput = createComponent({
-  tagName: 'ds-input',
-  elementClass: DsInputElement,
-  react: React,
-  events: {
-    onDsInput: 'ds-input' as EventName<CustomEvent<{ value: string }>>,
-    onDsChange: 'ds-change' as EventName<CustomEvent<{ value: string }>>
-  }
-});
-
-/**
- * React wrapper for ds-card web component
- */
-export const DsCard = createComponent({
-  tagName: 'ds-card',
-  elementClass: DsCardElement,
-  react: React,
-  events: {
-    onDsClick: 'ds-click' as EventName<CustomEvent>
-  }
-});
-
-// Type definitions for the wrapped components
-export type DsButtonProps = React.ComponentProps<typeof DsButton>;
-export type DsInputProps = React.ComponentProps<typeof DsInput>;
-export type DsCardProps = React.ComponentProps<typeof DsCard>;
-
+// Utility (optional export for consumers who want to use it)
+export { cn } from './utils/cn';
