@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { colors, spacing, typography, borderRadius, shadows } from '@ds/react';
 
@@ -42,7 +43,7 @@ export const Colors: Story = {
       <ColorScale name="Primary" scale={colors.primary} />
       <ColorScale name="Secondary" scale={colors.secondary} />
       <ColorScale name="Neutral" scale={colors.neutral} />
-      
+
       <h3>Semantic</h3>
       <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
         <ColorSwatch color={colors.success['500']} name="Success" />

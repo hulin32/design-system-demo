@@ -4,6 +4,7 @@ import {
   type ReactNode,
   type ElementType,
   type ComponentPropsWithoutRef,
+  type JSX,
 } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
@@ -44,7 +45,7 @@ type PolymorphicRef<T extends ElementType> = ComponentPropsWithoutRef<T>['ref'];
 
 export interface CardProps<T extends ElementType = 'div'>
   extends Omit<HTMLAttributes<HTMLElement>, 'onClick'>,
-    VariantProps<typeof cardVariants> {
+  VariantProps<typeof cardVariants> {
   /** The element type to render as */
   as?: T;
   /** The card variant */

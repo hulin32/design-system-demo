@@ -8,12 +8,14 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "default": "./dist/index.js"
     },
     "./tailwind": {
+      "types": "./dist/tailwind.preset.d.ts",
       "import": "./dist/tailwind.preset.js",
-      "types": "./dist/tailwind.preset.d.ts"
+      "default": "./dist/tailwind.preset.js"
     }
   },
   "files": [
@@ -26,20 +28,20 @@
   },
   "dependencies": {
     "@ds/tokens": "workspace:*",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.0"
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.0",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.0",
-    "vue-tsc": "^2.0.0",
-    "tailwindcss": "^3.4.0"
+    "@vitejs/plugin-vue": "^6.0.2",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4",
+    "vue-tsc": "^3.1.5"
   },
   "peerDependencies": {
-    "vue": ">=3.3.0",
-    "tailwindcss": ">=3.0.0"
+    "tailwindcss": ">=3.0.0",
+    "vue": ">=3.4.0"
   },
   "peerDependenciesMeta": {
     "tailwindcss": {
