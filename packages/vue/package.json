@@ -12,14 +12,13 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./tailwind": {
-      "types": "./dist/tailwind.preset.d.ts",
-      "import": "./dist/tailwind.preset.js",
-      "default": "./dist/tailwind.preset.js"
+    "./tailwind.css": {
+      "default": "./src/tailwind.css"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src/tailwind.css"
   ],
   "scripts": {
     "build": "vue-tsc --declaration --emitDeclarationOnly && vite build",
@@ -30,17 +29,16 @@
     "@ds/tokens": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.2",
-    "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "vite": "^7.2.4",
     "vue-tsc": "^3.1.5"
   },
   "peerDependencies": {
-    "tailwindcss": ">=3.0.0",
+    "tailwindcss": ">=4.0.0",
     "vue": ">=3.4.0"
   },
   "peerDependenciesMeta": {

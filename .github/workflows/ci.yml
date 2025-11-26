@@ -43,9 +43,6 @@ jobs:
       - name: Build tokens
         run: pnpm build:tokens
 
-      - name: Build web components
-        run: pnpm --filter @ds/web-components build
-
       - name: Build React package
         run: pnpm --filter @ds/react build
 
@@ -54,38 +51,3 @@ jobs:
 
       - name: Build Storybook
         run: pnpm --filter docs build-storybook
-
-  # Job to sync tokens from Figma (triggered manually or by webhook)
-  sync-tokens:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build tokens
-        run: pnpm build:tokens
-
-      - name: Copy Dart tokens to Flutter package
-        run: cp packages/tokens/build/dart/tokens.dart packages/flutter/lib/tokens/tokens.dart
-
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'chore: sync design tokens'
-          file_pattern: 'packages/tokens/build/** packages/flutter/lib/tokens/**'
-
