@@ -40,3 +40,10 @@ packages/flutter/build/
 docs/storybook-static/
 
 .playwright-mcp/
+
+
+.nx/cache
+.nx/workspace-data
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+vite.config.*.timestamp*

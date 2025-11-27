@@ -4,21 +4,35 @@
   "private": true,
   "description": "Cross-platform design system for Flutter, React, and Vue",
   "scripts": {
-    "build": "pnpm build:tokens && pnpm build:packages",
-    "build:tokens": "pnpm --filter @ds/tokens build",
-    "build:packages": "pnpm --filter '@ds/*' --filter '!@ds/tokens' build",
-    "build:react": "pnpm build:tokens && pnpm --filter @ds/react build",
-    "build:vue": "pnpm build:tokens && pnpm --filter @ds/vue build",
-    "dev": "pnpm -r --parallel dev",
-    "lint": "pnpm -r lint",
-    "storybook": "pnpm --filter docs storybook",
-    "clean": "pnpm -r clean"
+    "build": "nx run-many -t build",
+    "build:tokens": "nx build @ds/tokens",
+    "build:react": "nx build @ds/react",
+    "build:vue": "nx build @ds/vue",
+    "build:affected": "nx affected -t build",
+    "dev": "nx run-many -t dev --parallel",
+    "lint": "nx run-many -t lint",
+    "test": "nx run-many -t test",
+    "storybook": "nx serve:storybook docs",
+    "build:storybook": "nx build:storybook docs",
+    "clean": "nx run-many -t clean && nx reset",
+    "graph": "nx graph",
+    "affected:graph": "nx affected:graph"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "@nx/storybook": "22.1.2",
+    "@nx/vite": "22.1.2",
+    "@nx/web": "22.1.2",
+    "@vitest/ui": "^4.0.0",
+    "jiti": "2.4.2",
+    "nx": "22.1.2",
+    "storybook": "10.1.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.0",
+    "vitest": "^4.0.0"
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "dependencies": {}
 }

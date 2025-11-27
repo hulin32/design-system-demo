@@ -50,5 +50,18 @@
     "components",
     "tailwindcss",
     "ssr"
-  ]
+  ],
+  "nx": {
+    "targets": {
+      "build": {
+        "inputs": [
+          "{projectRoot}/src/**/*",
+          "{projectRoot}/tsconfig.json"
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      }
+    }
+  }
 }

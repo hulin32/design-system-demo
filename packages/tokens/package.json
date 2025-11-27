@@ -36,5 +36,19 @@
     "design-tokens",
     "design-system",
     "style-dictionary"
-  ]
+  ],
+  "nx": {
+    "targets": {
+      "build": {
+        "inputs": [
+          "{projectRoot}/src/**/*",
+          "{projectRoot}/build.ts",
+          "{projectRoot}/transforms/**/*"
+        ],
+        "outputs": [
+          "{projectRoot}/build"
+        ]
+      }
+    }
+  }
 }

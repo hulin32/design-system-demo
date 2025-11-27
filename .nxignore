@@ -1,0 +1,12 @@
+# Ignore Flutter package (not managed by npm/Nx)
+packages/flutter
+
+# Cache directories
+.nx/cache
+node_modules
+
+# Build outputs (handled by Nx cache)
+**/dist
+**/build
+**/storybook-static
+
