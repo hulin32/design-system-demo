@@ -1,7 +1,7 @@
 {
   "name": "@ds/vue",
   "version": "1.0.0",
-  "description": "SSR-friendly Vue components for the design system",
+  "description": "The design system for Vue",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
