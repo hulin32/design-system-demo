@@ -1,0 +1,129 @@
+name: Publish Packages
+
+on:
+  push:
+    branches: [master]
+    # Only trigger on actual commits, not on workflow file changes
+    paths-ignore:
+      - ".github/workflows/**"
+      - "README.md"
+      - "docs/**"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Only run if not from a fork
+    if: github.event_name == 'push' && github.repository_owner != ''
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for Nx affected
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Configure npm for publishing
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
+
+      - name: Publish @ds/tokens
+        working-directory: ./packages/tokens
+        run: |
+          VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
+          # Check if this specific version already exists
+          if npm view "@ds/tokens@$VERSION" version >/dev/null 2>&1; then
+            echo "✓ Version $VERSION of @ds/tokens already exists on npm, skipping publish"
+          else
+            echo "📦 Publishing @ds/tokens@$VERSION"
+            pnpm publish --no-git-checks --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ds/react
+        working-directory: ./packages/react
+        run: |
+          VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
+          # Check if this specific version already exists
+          if npm view "@ds/react@$VERSION" version >/dev/null 2>&1; then
+            echo "✓ Version $VERSION of @ds/react already exists on npm, skipping publish"
+          else
+            echo "📦 Publishing @ds/react@$VERSION"
+            pnpm publish --no-git-checks --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @ds/vue
+        working-directory: ./packages/vue
+        run: |
+          VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
+          # Check if this specific version already exists
+          if npm view "@ds/vue@$VERSION" version >/dev/null 2>&1; then
+            echo "✓ Version $VERSION of @ds/vue already exists on npm, skipping publish"
+          else
+            echo "📦 Publishing @ds/vue@$VERSION"
+            pnpm publish --no-git-checks --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.0"
+          channel: "stable"
+
+      - name: Publish Flutter package
+        working-directory: ./packages/flutter
+        run: |
+          VERSION=$(grep -o "^version: [^ ]*" pubspec.yaml | cut -d' ' -f2)
+          PACKAGE_NAME=$(grep -o "^name: [^ ]*" pubspec.yaml | cut -d' ' -f2)
+
+          # Check if this specific version already exists on pub.dev
+          API_RESPONSE=$(curl -s "https://pub.dev/api/packages/$PACKAGE_NAME" || echo "")
+          if [ -n "$API_RESPONSE" ] && echo "$API_RESPONSE" | grep -q "\"version\": \"$VERSION\""; then
+            echo "✓ Version $VERSION of $PACKAGE_NAME already exists on pub.dev, skipping publish"
+          else
+            echo "📦 Publishing $PACKAGE_NAME@$VERSION to pub.dev"
+            # Configure pub.dev token
+            echo "${{ secrets.PUB_DEV_TOKEN }}" | dart pub token add https://pub.dev
+            # Publish to pub.dev (non-interactive, --force skips confirmation)
+            dart pub publish --force
+          fi
+        env:
+          PUB_DEV_TOKEN: ${{ secrets.PUB_DEV_TOKEN }}
