@@ -1,6 +1,6 @@
 {
   "name": "@ds/react",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "SSR-friendly React components for the design system",
   "type": "module",
   "main": "dist/index.js",
