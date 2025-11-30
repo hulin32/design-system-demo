@@ -14,10 +14,20 @@ permissions:
   id-token: write
 
 jobs:
-  publish:
+  publish-npm:
     runs-on: ubuntu-latest
     # Only run if not from a fork
     if: github.event_name == 'push' && github.repository_owner != ''
+
+    strategy:
+      matrix:
+        package:
+          - name: "@ds/tokens"
+            path: "./packages/tokens"
+          - name: "@ds/react"
+            path: "./packages/react"
+          - name: "@ds/vue"
+            path: "./packages/vue"
 
     steps:
       - name: Checkout repository
@@ -55,52 +65,28 @@ jobs:
       - name: Build all packages
         run: pnpm build
 
-      - name: Configure npm for publishing
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
-
-      - name: Publish @ds/tokens
-        working-directory: ./packages/tokens
+      - name: Publish ${{ matrix.package.name }}
+        working-directory: ${{ matrix.package.path }}
         run: |
           VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
           # Check if this specific version already exists
-          if npm view "@ds/tokens@$VERSION" version >/dev/null 2>&1; then
-            echo "✓ Version $VERSION of @ds/tokens already exists on npm, skipping publish"
+          if npm view "${{ matrix.package.name }}@$VERSION" version >/dev/null 2>&1; then
+            echo "✓ Version $VERSION of ${{ matrix.package.name }} already exists on npm, skipping publish"
           else
-            echo "📦 Publishing @ds/tokens@$VERSION"
+            echo "📦 Publishing ${{ matrix.package.name }}@$VERSION"
             pnpm publish --no-git-checks --access public
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @ds/react
-        working-directory: ./packages/react
-        run: |
-          VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
-          # Check if this specific version already exists
-          if npm view "@ds/react@$VERSION" version >/dev/null 2>&1; then
-            echo "✓ Version $VERSION of @ds/react already exists on npm, skipping publish"
-          else
-            echo "📦 Publishing @ds/react@$VERSION"
-            pnpm publish --no-git-checks --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  publish-flutter:
+    runs-on: ubuntu-latest
+    # Only run if not from a fork
+    if: github.event_name == 'push' && github.repository_owner != ''
 
-      - name: Publish @ds/vue
-        working-directory: ./packages/vue
-        run: |
-          VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
-          # Check if this specific version already exists
-          if npm view "@ds/vue@$VERSION" version >/dev/null 2>&1; then
-            echo "✓ Version $VERSION of @ds/vue already exists on npm, skipping publish"
-          else
-            echo "📦 Publishing @ds/vue@$VERSION"
-            pnpm publish --no-git-checks --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
